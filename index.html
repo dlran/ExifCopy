@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Untitled</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
+  </head>
+  <body>
+    <h1 class="text-3xl mt-10 font-bold underline text-center">
+      Exif Copy
+    </h1>
+    <div class="js-item mt-10 mx-auto flex max-w-sm items-center gap-x-4 rounded-xl bg-white p-2 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+      <img class="size-12 shrink-0 js-preview" src="/img/logo.svg" alt="Photo1" />
+      <div class="w-0 flex-1">
+        <input type="file" class="w-1/1 js-uploadbtn" name="pic1" accept="image/*" />
+        <div class="break-all text-xl font-medium text-black dark:text-white js-filename">-</div>
+        <p class="break-all text-gray-500 dark:text-gray-400 js-exifOutput">-</p>
+      </div>
+    </div>
+    <div class="js-item mt-10 mx-auto flex max-w-sm items-center gap-x-4 rounded-xl bg-white p-2 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+      <img class="size-12 shrink-0 js-preview" src="/img/logo.svg" alt="Photo1" />
+      <div>
+        <input type="file" class="w-1/1 js-uploadbtn" name="pic1" accept="image/*" />
+        <div class="break-all text-xl font-medium text-black dark:text-white js-filename">-</div>
+        <p class="break-all text-gray-500 dark:text-gray-400 js-exifOutput">-</p>
+      </div>
+    </div>
+    <div class="my-10 text-center">
+      <button class="js-copy-btn me-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-400 active:bg-blue-600 transition cursor-pointer">
+        Copy
+      </button>
+      <button class="js-dl-btn px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-400 active:bg-blue-600 transition cursor-pointer">
+        Download
+      </button>
+    </div>
+    <script>
+      let dataList = Array.from({length: 2}, (x) => ({
+        fileData: null,
+        fileName: null,
+        exif: null,
+        $img: null,
+        $content: null
+      }))
+      function setItem(fileData, item) {
+        item.$img.src = fileData
+        try {
+          let exifObj = piexif.load(fileData)
+          let exifObjView = {}
+          for (let ifd in exifObj) {
+            if (ifd == "thumbnail") {
+              continue;
+            }
+            for (var tag in exifObj[ifd]) {
+              const tagName = piexif.TAGS[ifd][tag]["name"]
+              if (['MakerNote'].includes(tagName)) {
+                continue
+              }
+              exifObjView[tagName] = exifObj[ifd][tag]
+            }
+          }
+          item.$content.textContent = JSON.stringify(exifObjView, null, 2);
+          item['exif'] = exifObj
+          item['fileData'] = fileData
+        } catch (error) {
+          item.$content.textContent = "Failed to load EXIF：" + error;
+        }
+      }
+      document.querySelectorAll('.js-item').forEach(function(item, index) {
+        const preview = item.querySelector('.js-preview');
+        const content = item.querySelector('.js-exifOutput')
+        dataList[index]['$img'] = preview
+        dataList[index]['$content'] = content
+        item.querySelector('.js-uploadbtn').addEventListener('change', function(event) {
+          const file = event.target.files[0]
+          if (!file) { return }
+          const fnameDom = item.querySelector('.js-filename');
+          fnameDom.textContent = file.name
+
+          const reader = new FileReader()
+          reader.onload = function(e) {
+            const imageData = e.target.result
+            dataList[index]['fileName'] = file.name
+
+            setItem(imageData, dataList[index])
+          }
+          reader.readAsDataURL(file)
+        })
+      })
+      document.querySelector('.js-copy-btn').addEventListener('click', function() {
+        if (dataList.some(v => !v || !v.fileData)) {
+          console.log('Please to choose image')
+          return
+        }
+        const fromExif = dataList[0]['exif']
+        const zeroth = {}
+        const exif = {}
+        const gps = {}
+        const cp_keys = [
+          piexif.ImageIFD.Make,
+          piexif.ImageIFD.Model,
+          // piexif.ImageIFD.Software,
+          piexif.ExifIFD.DateTimeOriginal,
+          piexif.ExifIFD.LensMake,
+          piexif.ExifIFD.LensModel
+        ]
+
+        const exifObj = {"0th": zeroth, "Exif": exif, "GPS": gps}
+        Object.keys(exifObj).forEach(v1 => {
+          cp_keys.forEach(v2 => {
+            if (fromExif[v1][v2]) {
+              exifObj[v1][v2] = fromExif[v1][v2]
+            }
+          })
+        })
+        const exifStr = piexif.dump(exifObj)
+        const newImage = piexif.insert(exifStr, dataList[1]['fileData'])
+        setItem(newImage, dataList[1])
+      })
+      document.querySelector('.js-dl-btn').addEventListener('click', function() {
+        const link = document.createElement('a')
+        link.href = dataList[1]['fileData']
+        const [p, s] = splitext(dataList[1]['fileName'])
+        link.download = `${p}_${generateRandomString()}${s}`
+        link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }))
+      })
+      function splitext(str) {
+        let idx = str.lastIndexOf('.')
+        if (idx < 0) { return [str, ''] }
+        return [str.slice(0, idx), str.slice(idx)]
+      }
+      function generateRandomString(length = 4) {
+        return Array.from({ length }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 52)]).join('');
+      }
+    </script>
+  </body>
+</html>
