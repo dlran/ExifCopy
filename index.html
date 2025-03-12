@@ -7,20 +7,24 @@
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
   </head>
-  <body>
-    <h1 class="text-3xl mt-10 font-bold underline text-center">
+  <body class="p-1">
+    <h1 class="text-3xl mt-6 font-bold underline text-center">
       Exif Copy
     </h1>
-    <div class="js-item mt-10 mx-auto flex max-w-sm items-center gap-x-4 rounded-xl bg-white p-2 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-      <img class="size-12 shrink-0 js-preview" src="/img/logo.svg" alt="Photo1" />
+    <div class="js-item mt-10 mx-auto flex max-w-5xl items-center gap-x-4 rounded-xl bg-white p-2 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+      <img class="size-12 shrink-0 js-preview"
+        src="https://placehold.jp/50x50.png"
+        alt="Preview" />
       <div class="w-0 flex-1">
-        <input type="file" class="w-1/1 js-uploadbtn" name="pic1" accept="image/*" />
+        <input type="file" class="w-1/1 js-uploadbtn" name="pic1" accept="image/*,.heic" />
         <div class="break-all text-xl font-medium text-black dark:text-white js-filename">-</div>
         <p class="break-all text-gray-500 dark:text-gray-400 js-exifOutput">-</p>
       </div>
     </div>
-    <div class="js-item mt-10 mx-auto flex max-w-sm items-center gap-x-4 rounded-xl bg-white p-2 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
-      <img class="size-12 shrink-0 js-preview" src="/img/logo.svg" alt="Photo1" />
+    <div class="js-item mt-10 mx-auto flex max-w-5xl items-center gap-x-4 rounded-xl bg-white p-2 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
+      <img class="size-12 shrink-0 js-preview"
+        src="https://placehold.jp/50x50.png"
+        alt="Preview" />
       <div>
         <input type="file" class="w-1/1 js-uploadbtn" name="pic1" accept="image/*" />
         <div class="break-all text-xl font-medium text-black dark:text-white js-filename">-</div>
@@ -100,10 +104,28 @@
         const cp_keys = [
           piexif.ImageIFD.Make,
           piexif.ImageIFD.Model,
-          // piexif.ImageIFD.Software,
+          piexif.ImageIFD.Software,
           piexif.ExifIFD.DateTimeOriginal,
+          piexif.ExifIFD.DateTimeDigitized,
           piexif.ExifIFD.LensMake,
-          piexif.ExifIFD.LensModel
+          piexif.ExifIFD.LensModel,
+          piexif.ExifIFD.ExposureTime,
+          piexif.ExifIFD.ExposureMode,
+          piexif.ExifIFD.ExposureProgram,
+          piexif.ExifIFD.ExposureBiasValue,
+          piexif.ExifIFD.MeteringMode,
+          piexif.ExifIFD.FocalLength,
+          piexif.ExifIFD.Flash,
+          piexif.ExifIFD.FNumber,
+          piexif.ExifIFD.ISOSpeedRatings,
+          piexif.ExifIFD.ExifVersion,
+          piexif.ExifIFD.ColorSpace,
+          piexif.GPSIFD.GPSLatitudeRef,
+          piexif.GPSIFD.GPSLatitude,
+          piexif.GPSIFD.GPSLongitudeRef,
+          piexif.GPSIFD.GPSLongitude,
+          piexif.GPSIFD.GPSVersionID,
+          piexif.GPSIFD.GPSDateStamp,
         ]
 
         const exifObj = {"0th": zeroth, "Exif": exif, "GPS": gps}
