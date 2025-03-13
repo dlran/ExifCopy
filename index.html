@@ -52,19 +52,23 @@
         try {
           let exifObj = piexif.load(fileData)
           let exifObjView = {}
+          item.$content.innerHTML = ''
           for (let ifd in exifObj) {
             if (ifd == "thumbnail") {
               continue;
             }
+            exifObjView[ifd] = {}
             for (var tag in exifObj[ifd]) {
               const tagName = piexif.TAGS[ifd][tag]["name"]
               if (['MakerNote'].includes(tagName)) {
                 continue
               }
-              exifObjView[tagName] = exifObj[ifd][tag]
+              exifObjView[ifd][tagName] = exifObj[ifd][tag]
             }
+            const $divIfd = document.createElement('div')
+            $divIfd.textContent = `${ifd}: ${JSON.stringify(exifObjView[ifd], null, 2)}`
+            item.$content.appendChild($divIfd)
           }
-          item.$content.textContent = JSON.stringify(exifObjView, null, 2);
           item['exif'] = exifObj
           item['fileData'] = fileData
         } catch (error) {
@@ -104,7 +108,7 @@
         const cp_keys = [
           piexif.ImageIFD.Make,
           piexif.ImageIFD.Model,
-          piexif.ImageIFD.Software,
+          piexif.ImageIFD.Orientation,
           piexif.ExifIFD.DateTimeOriginal,
           piexif.ExifIFD.DateTimeDigitized,
           piexif.ExifIFD.LensMake,
@@ -115,28 +119,68 @@
           piexif.ExifIFD.ExposureBiasValue,
           piexif.ExifIFD.MeteringMode,
           piexif.ExifIFD.FocalLength,
+          piexif.ExifIFD.FocalLengthIn35mmFilm,
           piexif.ExifIFD.Flash,
           piexif.ExifIFD.FNumber,
-          piexif.ExifIFD.ISOSpeedRatings,
           piexif.ExifIFD.ExifVersion,
           piexif.ExifIFD.ColorSpace,
+
+          piexif.ExifIFD.ISOSpeedRatings,
+          piexif.ExifIFD.ShutterSpeedValue,
+          piexif.ExifIFD.ApertureValue,
+          piexif.ExifIFD.BrightnessValue,
+
           piexif.GPSIFD.GPSLatitudeRef,
           piexif.GPSIFD.GPSLatitude,
           piexif.GPSIFD.GPSLongitudeRef,
           piexif.GPSIFD.GPSLongitude,
+          piexif.GPSIFD.GPSAltitudeRef,
+          piexif.GPSIFD.GPSAltitude,
+          piexif.GPSIFD.GPSSpeedRef,
+          piexif.GPSIFD.GPSSpeed,
+          piexif.GPSIFD.GPSImgDirectionRef,
+          piexif.GPSIFD.GPSImgDirection,
+          piexif.GPSIFD.GPSDestBearingRef,
+          piexif.GPSIFD.GPSDestBearing,
+          piexif.GPSIFD.GPSHPositioningError,
           piexif.GPSIFD.GPSVersionID,
           piexif.GPSIFD.GPSDateStamp,
         ]
 
-        const exifObj = {"0th": zeroth, "Exif": exif, "GPS": gps}
-        Object.keys(exifObj).forEach(v1 => {
-          cp_keys.forEach(v2 => {
-            if (fromExif[v1][v2]) {
-              exifObj[v1][v2] = fromExif[v1][v2]
+        // const exifObj = {"0th": zeroth, "Exif": exif, "GPS": gps}
+        // Object.keys(exifObj).forEach(v1 => {
+        //   cp_keys.forEach(v2 => {
+        //     if (fromExif[v1][v2]) {
+        //       exifObj[v1][v2] = fromExif[v1][v2]
+        //     }
+        //   })
+        // })
+        const exifParams = {}
+        const excludeTags = [
+          piexif.ImageIFD.XResolution,
+          piexif.ImageIFD.YResolution,
+          piexif.ImageIFD.ResolutionUnit,
+          piexif.ImageIFD.Software,
+          piexif.ImageIFD.TileWidth,
+          piexif.ImageIFD.TileLength,
+          piexif.ImageIFD.GPSTag,
+          piexif.ImageIFD.ExifTag,
+          piexif.ExifIFD.ExifVersion,
+          piexif.ExifIFD.PixelXDimension,
+          piexif.ExifIFD.PixelYDimension,
+        ]
+        for (let k in fromExif) {
+          if (k === 'thumbnail' || !Object.keys(fromExif[k]).length) {
+            continue
+          }
+          exifParams[k] = structuredClone(fromExif[k])
+          excludeTags.forEach(v => {
+            if (v in exifParams[k]) {
+              delete exifParams[k][v]
             }
           })
-        })
-        const exifStr = piexif.dump(exifObj)
+        }
+        const exifStr = piexif.dump(exifParams)
         const newImage = piexif.insert(exifStr, dataList[1]['fileData'])
         setItem(newImage, dataList[1])
       })
